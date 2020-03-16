@@ -32,7 +32,9 @@ class MemoListAdapter (private val list: MutableList<MemoData>): RecyclerView.Ad
         else{
             holder.containerView.titleView.visibility = View.GONE
         }
-        holder.containerView.summaryView.text = list[position].summary
+       holder.containerView.summaryView.text = list[position].summary
+        //holder.summaryView.text = list[position].summary
+        //내부적으로는 id로 findViewById로 생성한 View 변수를 참조하느냐 LayoutContainer를 이용하여 containerView에 캐시된 View 변수를 참조하느냐의 차이
         holder.containerView.dateView.text = dateFormat.format(list[position].createdAt)
 
 

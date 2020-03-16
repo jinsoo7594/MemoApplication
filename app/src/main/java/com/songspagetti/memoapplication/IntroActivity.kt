@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+
 // 일정한 시간이 지난 후 ListActivity로 이동
 class IntroActivity : AppCompatActivity() {
 
@@ -14,6 +15,7 @@ class IntroActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_intro)
+
 
         //안드로이드 앱을 띄우는 Window의 속성을 변경하여 시스템UI를 숨기고 전체화면으로 표시하는 코드
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LOW_PROFILE or
