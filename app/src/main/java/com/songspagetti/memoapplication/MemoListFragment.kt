@@ -1,6 +1,7 @@
 package com.songspagetti.memoapplication
 
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -52,6 +53,11 @@ class MemoListFragment : Fragment() {
                 listAdapter = MemoListAdapter(it)
                 memoListView.adapter = listAdapter
                 memoListView.layoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
+                listAdapter.itemClickListener = {
+                    val intent = Intent(activity, DetailActivity::class.java)
+                    intent.putExtra("MEMO_ID", it)
+                    startActivity(intent)
+                }
             }
             // LiveData 개체인 MemoLiveData 에 observe 함수를 통해 값이 변할 때 동작할 Observer 를 붙여줌 (Observer 내에서는 adapter 의 갱신코드 호출)
             it.memoLiveData.observe(this,
@@ -59,7 +65,16 @@ class MemoListFragment : Fragment() {
                     listAdapter.notifyDataSetChanged()
                 }
             )
+
+
         }
+
+    }
+
+    // 메모를 작성하고 되돌아 왔을 때 리스트가 갱신되도록 한다.
+    override fun onResume() {
+        super.onResume()
+        listAdapter.notifyDataSetChanged()
     }
 
 

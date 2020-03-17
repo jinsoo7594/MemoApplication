@@ -1,11 +1,10 @@
 package com.songspagetti.memoapplication
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import com.songspagetti.memoapplication.data.MemoData
 import kotlinx.android.synthetic.main.activity_list.*
-import java.util.*
 
 class ListActivity : AppCompatActivity() {
 
@@ -18,16 +17,17 @@ class ListActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         //fab를 누르면 DetailActivity로 이동
         fab.setOnClickListener { view ->
-            //val intent = Intent(this, DetailActivity::class.java)
-            //startActivity(intent)
+            val intent = Intent(this, DetailActivity::class.java)
+            startActivity(intent)
+            /*
             viewModel!!.let{
                 var memoData = MemoData()
                 memoData.title = "제목 테스트"
                 memoData.summary = "요약내용 테스트"
                 memoData.createdAt = Date()
                 it.addMemo(memoData)
+            }*/
 
-            }
         }
         // MemoListFragment 를 화면에 표시
         val fragmentTransaction = supportFragmentManager.beginTransaction().replace(R.id.contentLayout, MemoListFragment()).commit()

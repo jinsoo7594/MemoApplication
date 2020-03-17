@@ -12,9 +12,22 @@ class MemoListAdapter (private val list: MutableList<MemoData>): RecyclerView.Ad
     //Date객체를 사람이 볼수있는 문자열로 변환
     private val dateFormat = SimpleDateFormat("MM/dd HH:mm")
 
+
+    lateinit var itemClickListener: (itemId: String) -> Unit // >>>???
+
+
+
+
     //item_memo를 불러 ViewHolder 생성, 리사이클러뷰는 뷰를 알아서 붙여주므로 false
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_memo, parent, false)
+        // 아이템이 클릭될 때 view 의 tag 에서 메모id 를 받아서 리스너에 넘김
+        view.setOnClickListener {
+            itemClickListener.run {
+                val memoId = it.tag as String
+                this(memoId)
+            }
+        }
         return ItemViewHolder(view)
     }
     // list 내의 MemoData 의 개수 반환
@@ -36,7 +49,7 @@ class MemoListAdapter (private val list: MutableList<MemoData>): RecyclerView.Ad
         //holder.summaryView.text = list[position].summary
         //내부적으로는 id로 findViewById로 생성한 View 변수를 참조하느냐 LayoutContainer를 이용하여 containerView에 캐시된 View 변수를 참조하느냐의 차이
         holder.containerView.dateView.text = dateFormat.format(list[position].createdAt)
-
+        holder.containerView.tag = list[position].id
 
     }
 
