@@ -12,20 +12,19 @@ class MemoListAdapter (private val list: MutableList<MemoData>): RecyclerView.Ad
     //Date객체를 사람이 볼수있는 문자열로 변환
     private val dateFormat = SimpleDateFormat("MM/dd HH:mm")
 
-
     lateinit var itemClickListener: (itemId: String) -> Unit // >>>???
-
-
 
 
     //item_memo를 불러 ViewHolder 생성, 리사이클러뷰는 뷰를 알아서 붙여주므로 false
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_memo, parent, false)
+
         // 아이템이 클릭될 때 view 의 tag 에서 메모id 를 받아서 리스너에 넘김
         view.setOnClickListener {
             itemClickListener.run {
                 val memoId = it.tag as String
-                this(memoId)
+                this(memoId) // item_memo 아이템을 클릭할 때마다 "Function1<java.lang.String, kotlin.Unit>" 가 itemClickListener에 저장된다.
+
             }
         }
         return ItemViewHolder(view)

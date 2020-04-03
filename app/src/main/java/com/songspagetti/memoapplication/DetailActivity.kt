@@ -1,20 +1,28 @@
 package com.songspagetti.memoapplication
 
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
+import com.takisoft.datetimepicker.DatePickerDialog
+import com.takisoft.datetimepicker.TimePickerDialog
 import kotlinx.android.synthetic.main.activity_detail.*
 import kotlinx.android.synthetic.main.content_detail.*
+import java.util.*
 
 class DetailActivity : AppCompatActivity() {
 
     private var viewModel: DetailVIewModel? = null
+    private val dialogCalendar =
+        Calendar.getInstance() // 날짜와 시간 다이얼로그에서 설정 중인 값을 임시로 저장해 두기 위한 Calendar 변수 추가
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +42,9 @@ class DetailActivity : AppCompatActivity() {
         viewModel!!.let {
             it.title.observe(this, Observer { supportActionBar?.title = it })
             it.content.observe(this, Observer { contentEdit.setText(it) })
+            it.alarmTime.observe(
+                this,
+                Observer { alarmInfoView.setAlarmdate(it) }) // 받아온 값을 alarmInfoView 에 넘겨 표시해 줌
         }
         // ListActivity 에서 특정 아이템(메모)을 선택했을 때 보내주는 메모 id를 받아 데이터를 로드함
         // 새로 작성하는 메모일 경우 메모id 가 없어 이 루틴은 동작하지 않는다.
@@ -51,18 +62,89 @@ class DetailActivity : AppCompatActivity() {
                 .setNegativeButton("취소", null)
                 .setPositiveButton("확인", DialogInterface.OnClickListener { dialog, which ->
                     supportActionBar?.title = titleEdit.text.toString() // 확인 버튼을 누르면 제목 변경
+                    toolbar_layout.title = titleEdit.text.toString()
                 }).show()
 
         }
     }
-
     // 뒤로가기 눌렀을 때 동작
     override fun onBackPressed() {
         super.onBackPressed()
         // 메모 DB 갱신
         viewModel?.addOrUpdateMemo(
+            this,
             supportActionBar?.title.toString(),
             contentEdit.text.toString()
         )
     }
+
+    //private var viewModel: DetailVIewModel? = null
+    //private val dialogCalendar = Calendar.getInstance()
+    // 날짜 다이얼로그를 여는 함
+    private fun openDateDialog() {
+        // android.app 의 클래스를 임포트 하면 안되고 build.gradle 에서 추가했던 com.takisoft.datetimepicker 의 DatePickerDialog 로 생성해야 됨
+        val datePickerDialog = DatePickerDialog(this)
+        // 사용자에 의해 날짜가 입력되면 실행되는 리스너
+        datePickerDialog.setOnDateSetListener { view, year, month, dayOfMonth ->
+            dialogCalendar.set(year, month, dayOfMonth) // 임시 캘린더 변수에 값을 저장하고
+            openTimeDialog() // 시간을 설정하는 다이얼로그를 열도록 함
+        }
+        datePickerDialog.show() // 만들어진 다이얼로그 연다.
+    }
+
+    // 시간 다이얼로그를 여는 함수
+    private fun openTimeDialog() {
+        // 생성자 안에서 리스너를 구현(등록)하여 시간이 입력 됐을 때 앞에서 날짜가 입력됐었던 임시 캘린더 변수에 사용자가 입력한 시간을 설정하고
+        // 캘린더 변수의 time 값(Date 객체) 를 viewModel 에 새 알람값으로 설정해 준다.
+        val timePickerDialog = TimePickerDialog(
+            this,
+            TimePickerDialog.OnTimeSetListener { view, hourOfDay, minute ->
+                dialogCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                dialogCalendar.set(Calendar.MINUTE, minute)
+
+                viewModel?.setAlarm(dialogCalendar.time)
+            }, 0, 0, false
+        ) // 다이얼로그의 초기시간은 0시 0분으로 설정함, 24시간제는 사용하지 않
+        timePickerDialog.show() // 만들어진 다이얼로그를 화면에 띄움
+    }
+
+    // activity 에서 사용할 메뉴를 설정하는 함수를 override
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_detail, menu)
+        return true // 메뉴를 사용하겠다는 의미로 true 반환
+    }
+
+    // 메뉴 아이템을 선택했을 때 실행되는 함수
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) // 선택된 메뉴의 id 에 따라 분기
+        {
+            R.id.menu_share -> {
+                val intent = Intent()
+                intent.action = Intent.ACTION_SEND
+                intent.type = "text/plain"
+                intent.putExtra(Intent.EXTRA_SUBJECT, supportActionBar?.title)
+                intent.putExtra(Intent.EXTRA_TEXT, contentEdit.text.toString())
+
+                startActivity(intent)
+            }
+            R.id.menu_alarm -> {
+                if (viewModel?.alarmTime?.value!!.after(Date())) { // 기존의 알람값이 현재 시간 기준으로 유효한지 체크
+                    AlertDialog.Builder(this) // 알람을 재설정할 것인지 삭제할 것인지 묻는 다이얼로그 띄
+                        .setTitle("안내")
+                        .setMessage("기존에 알람이 설정되어 있습니다. 삭제 또는 재설정할 수 있습니다.")
+                        .setPositiveButton("재설정", DialogInterface.OnClickListener { dialog, which ->
+                            openDateDialog()
+                        })
+                        .setNegativeButton("삭제", DialogInterface.OnClickListener { dialog, which ->
+                            viewModel?.deleteAlarm() // alarmTime 초기화
+                        })
+                        .show()
+                } else {
+                    openDateDialog() // 유효하지 않다면 날짜 다이얼로그를 띄워 알람값을 바로 설정하도록 함
+                }
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
 }

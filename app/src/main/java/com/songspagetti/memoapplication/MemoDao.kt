@@ -23,13 +23,14 @@ class MemoDao (private val realm: Realm){
             .findFirst() as MemoData
     }
     // 메모 생성 or 수정
-    fun addOrUpdateMemo(memoData: MemoData, title: String, content: String){
+    fun addOrUpdateMemo(memoData: MemoData, title: String, content: String, alarmTime: Date) {
         // ** DB 를 업데이트하는 쿼리는 반드시 executeTransaction() 함수로 감싸야 한다.
         // 다른 곳에서 DB를 수정할 수 없도록 요청들을 대기시켜 쿼리가 끝날 때까지 DB를 안전하게 사용 가능하게 해준다.
         realm.executeTransaction{
             memoData.title = title
             memoData.content = content
             memoData.createdAt = Date()
+            memoData.alarmTime = alarmTime //알람시간을 받아 갱신한다.
 
             if(content.length > 100)
                 memoData.summary = content.substring(0..100)
@@ -42,4 +43,13 @@ class MemoDao (private val realm: Realm){
                 }
         }
     }
+
+    //전체 MemoData 중 alarmTime 이 현재시간(Date())보다 큰 데이터만 가져오는 함수
+    fun getActiveAlarms(): RealmResults<MemoData> {
+        return realm.where(MemoData::class.java)
+            .greaterThan("alarmTime", Date())
+            .findAll()
+    }
+
+
 }
