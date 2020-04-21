@@ -6,6 +6,10 @@ import io.realm.RealmResults
 import io.realm.Sort
 import java.util.*
 
+//Realm 객체와 RealmResults는 기반 데이터에 의해 라이브로 자동 갱신되는 뷰입니다.
+//즉, 결과를 매번 다시 가져올 필요가 없다는 의미입니다. 오브젝트를 수정하면 질의는 즉시 결과로 반영됩니다.
+//예를 들어 액티비티와 프래그먼트가 질의의 결과에 의존하고, 매 접근에 앞서 데이터를 최신으로 갱신할 필요 없이 Realm 객체나 RealmResults를 필드에 저장하여 쓸 수 있습니다.
+
 //DAO (Data Access Object) : DB 에 직접 접근하지 않고 필요한 쿼리를 함수로 미리 작성하여 쿼리의 재사용성을 높이는 것
 // 생성자로 Realm 인스턴스를 받는 클래스
 class MemoDao (private val realm: Realm){
@@ -23,19 +27,18 @@ class MemoDao (private val realm: Realm){
             .findFirst() as MemoData
     }
     // 메모 생성 or 수정
-    fun addOrUpdateMemo(memoData: MemoData, title: String, content: String, alarmTime: Date) {
+    fun addOrUpdateMemo(memoData: MemoData) {
         // ** DB 를 업데이트하는 쿼리는 반드시 executeTransaction() 함수로 감싸야 한다.
         // 다른 곳에서 DB를 수정할 수 없도록 요청들을 대기시켜 쿼리가 끝날 때까지 DB를 안전하게 사용 가능하게 해준다.
         realm.executeTransaction{
-            memoData.title = title
-            memoData.content = content
-            memoData.createdAt = Date()
-            memoData.alarmTime = alarmTime //알람시간을 받아 갱신한다.
 
-            if(content.length > 100)
-                memoData.summary = content.substring(0..100)
+            memoData.createdAt = Date()
+
+
+            if (memoData.content.length > 100)
+                memoData.summary = memoData.content.substring(0..100)
             else
-                memoData.summary = content
+                memoData.summary = memoData.content
             // 여기까지 수정문
             // Managed 상태가 아닌경우 copyToRealm()함수로 DB에 추가
             if(!memoData.isManaged){

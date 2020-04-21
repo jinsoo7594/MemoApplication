@@ -22,7 +22,8 @@ class MemoListFragment : Fragment() {
     private var viewModel: ListViewModel? = null
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
@@ -56,10 +57,12 @@ class MemoListFragment : Fragment() {
                 listAdapter.itemClickListener = {
                     val intent = Intent(activity, DetailActivity::class.java)
                     intent.putExtra("MEMO_ID", it)
-                    startActivity(intent)
+                    startActivity(intent) 
                 }
             }
             // LiveData 개체인 MemoLiveData 에 observe 함수를 통해 값이 변할 때 동작할 Observer 를 붙여줌 (Observer 내에서는 adapter 의 갱신코드 호출)
+            // void observe(LifecycleOwner owner, Observe<T> observer) /// LiveData 클래스 내 메소드
+            // Adds the given observer to the observers list within the lifespan of the given owner.
             it.memoLiveData.observe(this,
                 Observer{
                     listAdapter.notifyDataSetChanged()

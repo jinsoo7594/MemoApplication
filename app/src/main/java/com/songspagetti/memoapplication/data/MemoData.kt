@@ -18,3 +18,5 @@ open class MemoData (
     var alarmTime: Date = Date(),
     var weather: String = ""
 ) : RealmObject()
+//Realm 모델 객체는 특정 객체를 상속받거나 구현해야 합니다. 즉, 상속은 RealmObject를 상속하거나, RealmModel을 구현해야 합니다.
+// 이렇게 만든 모델 객체는 Realm에 관리되는 managed, 혹은 일종의 POJO 객체인 unmanaged 두 가지 상태 중 하나를 가집니다.
