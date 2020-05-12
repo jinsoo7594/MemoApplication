@@ -79,12 +79,10 @@ class IntroActivity : AppCompatActivity() {
             }
             //앱에 필요한 권한을 사용자에게 요청하는 시스템 Activity 띄움
             ActivityCompat.requestPermissions(
-                this,
-                arrayOf(
+                this, arrayOf(
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                REQUEST_LOCATION_PERMISSION_CODE
+                ), REQUEST_LOCATION_PERMISSION_CODE
             )
         }
 

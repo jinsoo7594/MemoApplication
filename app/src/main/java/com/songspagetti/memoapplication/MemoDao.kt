@@ -41,9 +41,21 @@ class MemoDao (private val realm: Realm){
                 memoData.summary = memoData.content
             // 여기까지 수정문
             // Managed 상태가 아닌경우 copyToRealm()함수로 DB에 추가
+            // ㄴ 에러 발생 : ThrowingException 8, Attempting to create an object of type 'MemoData' with an existing primary key value
+            // 뒤로가기를 눌렀을 때 update 가 되어야 하는데 copyToRealm 은 생성하는 함수라 예외 발
             if(!memoData.isManaged){
-                    it.copyToRealm(memoData)
+                //it.copyToRealm(memoData)
+                it.copyToRealmOrUpdate(memoData)
                 }
+            //public void execute(Realm realm) {
+            //        // 이것은 Realm의 새 클래스를 만들거나 이미 객체가 있다면 예외를 던집니다.
+            //        // (동일한 기본 키)
+            //        // realm.copyToRealm(obj);
+            //
+            //        // 이는 같은 기본 키가 있다면 기존 객체를 갱신하거나
+            //        // 기본 키 = 42인 객체가 없다면 새로운 객체를 만듭니다
+            //        realm.copyToRealmOrUpdate(obj);
+            //    }
         }
     }
 

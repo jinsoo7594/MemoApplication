@@ -12,7 +12,7 @@ class MemoListAdapter (private val list: MutableList<MemoData>): RecyclerView.Ad
     //Date객체를 사람이 볼수있는 문자열로 변환
     private val dateFormat = SimpleDateFormat("MM/dd HH:mm")
 
-    lateinit var itemClickListener: (itemId: String) -> Unit // >>>???
+    lateinit var itemClickListener: (itemId: String) -> Unit
 
 
     //item_memo를 불러 ViewHolder 생성, 리사이클러뷰는 뷰를 알아서 붙여주므로 false

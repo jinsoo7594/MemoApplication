@@ -1,9 +1,11 @@
 package com.songspagetti.memoapplication
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.location.Criteria
 import android.location.Location
 import android.location.LocationListener
@@ -19,6 +21,7 @@ import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
@@ -29,6 +32,7 @@ import com.takisoft.datetimepicker.DatePickerDialog
 import com.takisoft.datetimepicker.TimePickerDialog
 import kotlinx.android.synthetic.main.activity_detail.*
 import kotlinx.android.synthetic.main.content_detail.*
+import java.io.File
 import java.util.*
 
 class DetailActivity : AppCompatActivity() {
@@ -37,6 +41,10 @@ class DetailActivity : AppCompatActivity() {
     private val dialogCalendar =
         Calendar.getInstance() // 날짜와 시간 다이얼로그에서 설정 중인 값을 임시로 저장해 두기 위한 Calendar 변수 추가
 
+    // 기기내 저장된 이미지는 Intent를 통해 불러올 수 있다.
+    // Intent 로 Activity 결과를 요청할 때 사용하는 요청 코드 값 추가
+    private val REQUEST_IMAGE = 100
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_detail)
@@ -44,8 +52,13 @@ class DetailActivity : AppCompatActivity() {
 
         // 아직 미정인 기능
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+            //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+            //    .setAction("Action", null).show()
+
+            // 기기내에서 이미지 파일을 읽어올 수 있는 ACTION_GET_CONTENT 를 이용하여 해당 기능이 있는 activity를 호출함
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.type = "image/*"
+            startActivityForResult(intent, REQUEST_IMAGE)
         }
         // viewModel 생성
         viewModel = application!!.let {
@@ -58,6 +71,17 @@ class DetailActivity : AppCompatActivity() {
             contentEdit.setText(it.content)
             alarmInfoView.setAlarmdate(it.alarmTime)
             locationInfoView.setLocation(it.latitude, it.longitude)
+            weatherInfoView.setWeather(it.weather)
+
+            // 이미지 파일 경로를 Uri 로 바꾸어 bgImage (이미지뷰) 에 설정함
+            val imageFile = File(
+                getDir("image", Context.MODE_PRIVATE),
+                it.id + ".jpg"
+            )
+
+            bgImage.setImageURI(imageFile.toUri())
+
+
         })
         // ListActivity 에서 특정 아이템(메모)을 선택했을 때 보내주는 메모 id를 받아 데이터를 로드함
         // 새로 작성하는 메모일 경우 메모id 가 없어 이 루틴은 동작하지 않는다.
@@ -253,8 +277,86 @@ class DetailActivity : AppCompatActivity() {
                         viewModel!!.setLocation(0.0, 0.0)
                     }).show()
             }
+            R.id.menu_weather -> {
+                AlertDialog.Builder(this)
+                    .setTitle("안내")
+                    .setMessage("현재 날씨를 메모에 저장하거나 삭제할 수 있습니다.")
+                    .setPositiveButton("날씨 가져오기", DialogInterface.OnClickListener { dialog, which ->
+                        val locationManager =
+                            getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                        val isGPSEnabled =
+                            locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                        val isNetworkEnabled =
+                            locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                        // 위치기능이 둘 다 꺼진 경우, 스낵바를 띄워 시스템의 위치옵션화면을 안내해줌
+                        if (!isGPSEnabled && !isNetworkEnabled) {
+                            Snackbar.make(
+                                toolbar_layout,
+                                "폰의 위치기능을 켜야 기능을 사용할 수 있습니다.",
+                                Snackbar.LENGTH_LONG
+                            )
+                                .setAction("설정", View.OnClickListener {
+                                    val goToSettings =
+                                        Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                                    startActivity(goToSettings)
+                                }).show()
+                        } else { // 하나라도 켜져있으면 Criteria 객체에 위치 정확도와 배터리 소모량을 설정.
+                            val criteria = Criteria()
+                            criteria.accuracy = Criteria.ACCURACY_MEDIUM
+                            criteria.powerRequirement = Criteria.POWER_MEDIUM
+                            // locationManager.requestSingleUpdate : 위치정보를 1회 받아온다.
+                            // 위치값을 받을 수 있는 LocationListener 타입의 object 를 구현하여 넘겨줘야한다.(override 할 함수 4개)
+                            locationManager.requestSingleUpdate(
+                                criteria,
+                                object : LocationListener {
+                                    // 위치정보가 갱신될때 실행, 갱신된 위치값을 ViewModel 에 넘겨준다.
+                                    override fun onLocationChanged(location: Location?) {
+                                        location?.run {
+                                            viewModel!!.setWeather(latitude, longitude)
+                                        }
+                                    }
+
+                                    override fun onProviderEnabled(provider: String?) {}
+                                    override fun onProviderDisabled(provider: String?) {}
+                                    override fun onStatusChanged(
+                                        provider: String?,
+                                        status: Int,
+                                        extras: Bundle?
+                                    ) {
+                                    }
+                                },
+                                null
+                            )
+                        }
+                    }).setNegativeButton("삭제", DialogInterface.OnClickListener { dialog, which ->
+                        viewModel!!.deleteWeather()
+                    }).show()
+            }
+
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQUEST_IMAGE && resultCode == Activity.RESULT_OK) {
+            try {
+                // 결과값으로 들어온 데이터를 비트맵으로 변환함
+                val inputStream = data?.data?.let { contentResolver.openInputStream(it) }
+                inputStream?.let {
+                    val image = BitmapFactory.decodeStream(it)
+                    //bgImage 에 표시되는 이미지를 null 로 초기화하고 새 이미지를 viewModel 에 설정함.
+                    bgImage.setImageURI(null)
+                    image?.let { viewModel?.setImageFile(this, it) }
+                    // 작업이 끝나면 input 스트림 닫아줌
+                    it.close()
+                }
+
+            } catch (e: Exception) {
+                println(e)
+            }
+        }
     }
 
 }

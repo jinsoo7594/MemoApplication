@@ -8,7 +8,7 @@ import kotlinx.android.synthetic.main.activity_list.*
 
 class ListActivity : AppCompatActivity() {
 
-    // ViewModel 을 담을 변수
+    // ViewModel 을 담을 변수  --> View 인 Activity 는 ViewModel 의 참조 값을 갖는다.
     private var viewModel: ListViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
